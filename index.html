@@ -9,16 +9,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
 
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: { sans: ['Outfit', 'sans-serif'] }
-    }
-  }
-}
-</script>
-
 <style>
 body { 
   background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
@@ -32,20 +22,43 @@ body {
 .card:hover {
   transform: translateY(-8px);
 }
+
+/* MODAL */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-box {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  animation: fadeIn .3s ease;
+}
+@keyframes fadeIn {
+  from { transform: translateY(20px); opacity:0 }
+  to { transform: translateY(0); opacity:1 }
+}
 </style>
 </head>
 
 <body class="font-sans text-slate-800">
 
-<!-- HEADER -->
 <header class="fixed top-0 w-full bg-white shadow z-50">
   <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between">
     <h1 class="text-2xl font-extrabold text-purple-600">Soal Editor</h1>
-    <span class="font-bold">🛠️ Operator</span>
-  </div>
+<a href="/admin.html" class="font-bold hover:text-purple-600 transition">
+  🛠️ Operator
+</a>  </div>
 </header>
 
-<!-- MAIN -->
 <main class="pt-24 max-w-7xl mx-auto px-4">
 
 <h2 class="text-center text-4xl font-extrabold mb-10">
@@ -56,14 +69,40 @@ Dashboard Pengisian Soal
 
 </main>
 
-<!-- SCRIPT GENERATE CARD -->
+<!-- MODAL -->
+<div id="modal" class="modal-bg">
+  <div class="modal-box text-center">
+    <h3 class="text-xl font-bold mb-4">Masukkan Password</h3>
+
+    <div class="relative mb-4">
+      <input id="passwordInput" type="password"
+        class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        placeholder="Password...">
+      <i id="togglePass" class="fas fa-eye absolute right-3 top-4 cursor-pointer text-gray-500"></i>
+    </div>
+
+    <div class="flex gap-3">
+      <button onclick="submitPassword()"
+        class="flex-1 bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700">
+        Buka
+      </button>
+      <button onclick="closeModal()"
+        class="flex-1 bg-gray-300 py-2 rounded-lg font-bold">
+        Batal
+      </button>
+    </div>
+
+    <p id="errorMsg" class="text-red-500 mt-3 hidden">Password salah!</p>
+  </div>
+</div>
+
 <script>
 const MAPEL = [
   {id:"pai", nama:"Pendidikan Agama Islam", icon:"fa-mosque"},
   {id:"pak", nama:"Pendidikan Agama Kristen", icon:"fa-church"},
   {id:"pah", nama:"Pendidikan Agama Hindu", icon:"fa-om"},
   {id:"pancasila", nama:"Pendidikan Pancasila", icon:"fa-flag"},
-  {id:"inggris", nama:"Bahasa Inggris", icon:"fa-brands fa-web-awesome"},
+  {id:"inggris", nama:"Bahasa Inggris", icon:"fa-globe"},
   {id:"indonesia", nama:"Bahasa Indonesia", icon:"fa-book"},
   {id:"matematika", nama:"Matematika", icon:"fa-square-root-alt"},
   {id:"ipa", nama:"IPA", icon:"fa-flask"},
@@ -83,52 +122,84 @@ MAPEL.forEach(m => {
   <div class="card p-5 text-center">
     <i class="fas ${m.icon} text-3xl text-purple-500 mb-3"></i>
     <h3 class="font-bold mb-4">${m.nama}</h3>
-    <a id="${m.id}" target="_blank"
-       class="block bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition">
+    <button id="${m.id}"
+       class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition">
        Loading...
-    </a>
+    </button>
   </div>`;
 });
-</script>
 
-<!-- FETCH DATA GOOGLE SHEET -->
-<script>
+// API
+const API_URL = "https://script.google.com/macros/s/AKfycbwxCATRhFQb7R-xJXS_YFMLxIebQ2jpdba076aULxJMNTmTafqr12dmTj6XGboEceF4nQ/exec";
 
-// 🔴 GANTI DENGAN URL WEB APP GAS KAMU
-const API_URL = "https://script.google.com/macros/s/AKfycbwqgEjoh_jptVJPoWUzaAts38kUmwM3yhUidJk4PeRSdozszkgDK902-02EXENK1H_PKA/exec";
+let DATA = {};
+let currentMapel = "";
 
 fetch(API_URL)
   .then(res => res.json())
   .then(res => {
 
-    if (res.status !== "success") {
+    if(res.status !== "success"){
       alert("Data gagal dimuat");
       return;
     }
 
-    const data = res.data;
+    DATA = res.data;
 
     MAPEL.forEach(m => {
       const el = document.getElementById(m.id);
 
-      if (!el) return;
-
-      if (data[m.id]) {
-        el.href = data[m.id];
+      if(DATA[m.id] && DATA[m.id].url){
         el.innerText = "Edit Soal";
+
+        el.onclick = () => openModal(m.id);
+
       } else {
         el.innerText = "Belum tersedia";
-        el.classList.remove("bg-purple-600");
-        el.classList.add("bg-gray-400", "cursor-not-allowed");
-        el.removeAttribute("href");
+
+        el.classList.remove("bg-purple-600","hover:bg-purple-700");
+        el.classList.add("bg-gray-400","cursor-not-allowed");
+
+        el.disabled = true;
       }
     });
 
-  })
-  .catch(() => {
-    alert("Gagal koneksi ke server");
   });
 
+// modal
+function openModal(id){
+  currentMapel = id;
+  document.getElementById("modal").style.display = "flex";
+  document.getElementById("passwordInput").value = "";
+  document.getElementById("errorMsg").classList.add("hidden");
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+function submitPassword(){
+  const input = document.getElementById("passwordInput").value;
+  const item = DATA[currentMapel];
+
+  if(input === item.password){
+    window.open(item.url, "_blank");
+    closeModal();
+  } else {
+    document.getElementById("errorMsg").classList.remove("hidden");
+  }
+}
+
+// enter submit
+document.getElementById("passwordInput").addEventListener("keypress", function(e){
+  if(e.key === "Enter") submitPassword();
+});
+
+// toggle password
+document.getElementById("togglePass").onclick = function(){
+  const input = document.getElementById("passwordInput");
+  input.type = input.type === "password" ? "text" : "password";
+};
 </script>
 
 </body>
