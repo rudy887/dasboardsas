@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Soal Editor</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Outfit', 'sans-serif'] }
+    }
+  }
+}
+</script>
+
+<style>
+body { 
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+}
+.card {
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: .3s;
+}
+.card:hover {
+  transform: translateY(-8px);
+}
+</style>
+</head>
+
+<body class="font-sans text-slate-800">
+
+<!-- HEADER -->
+<header class="fixed top-0 w-full bg-white shadow z-50">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between">
+    <h1 class="text-2xl font-extrabold text-purple-600">Soal Editor</h1>
+    <span class="font-bold">🛠️ Operator</span>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="pt-24 max-w-7xl mx-auto px-4">
+
+<h2 class="text-center text-4xl font-extrabold mb-10">
+Dashboard Pengisian Soal
+</h2>
+
+<div id="mapelContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+
+</main>
+
+<!-- SCRIPT GENERATE CARD -->
+<script>
+const MAPEL = [
+  {id:"pai", nama:"Pendidikan Agama Islam", icon:"fa-mosque"},
+  {id:"pak", nama:"Pendidikan Agama Kristen", icon:"fa-church"},
+  {id:"pah", nama:"Pendidikan Agama Hindu", icon:"fa-om"},
+  {id:"pancasila", nama:"Pendidikan Pancasila", icon:"fa-flag"},
+  {id:"indonesia", nama:"Bahasa Indonesia", icon:"fa-book"},
+  {id:"matematika", nama:"Matematika", icon:"fa-square-root-alt"},
+  {id:"ipa", nama:"IPA", icon:"fa-flask"},
+  {id:"ips", nama:"IPS", icon:"fa-globe-asia"},
+  {id:"senitari", nama:"Seni Tari", icon:"fa-palette"},
+  {id:"pjok", nama:"PJOK", icon:"fa-running"},
+  {id:"prakarya", nama:"Prakarya", icon:"fa-tools"},
+  {id:"informatika", nama:"Informatika", icon:"fa-laptop-code"},
+  {id:"bk", nama:"Bimbingan Konseling", icon:"fa-heart"},
+  {id:"tolaki", nama:"Bahasa Tolaki", icon:"fa-comments"},
+];
+
+const container = document.getElementById("mapelContainer");
+
+MAPEL.forEach(m => {
+  container.innerHTML += `
+  <div class="card p-5 text-center">
+    <i class="fas ${m.icon} text-3xl text-purple-500 mb-3"></i>
+    <h3 class="font-bold mb-4">${m.nama}</h3>
+    <a id="${m.id}" target="_blank"
+       class="block bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition">
+       Loading...
+    </a>
+  </div>`;
+});
+</script>
+
+<!-- FETCH DATA GOOGLE SHEET -->
+<script>
+
+// 🔴 GANTI DENGAN URL WEB APP GAS KAMU
+const API_URL = "https://script.google.com/macros/s/AKfycbwqgEjoh_jptVJPoWUzaAts38kUmwM3yhUidJk4PeRSdozszkgDK902-02EXENK1H_PKA/exec";
+
+fetch(API_URL)
+  .then(res => res.json())
+  .then(res => {
+
+    if (res.status !== "success") {
+      alert("Data gagal dimuat");
+      return;
+    }
+
+    const data = res.data;
+
+    MAPEL.forEach(m => {
+      const el = document.getElementById(m.id);
+
+      if (!el) return;
+
+      if (data[m.id]) {
+        el.href = data[m.id];
+        el.innerText = "Edit Soal";
+      } else {
+        el.innerText = "Belum tersedia";
+        el.classList.remove("bg-purple-600");
+        el.classList.add("bg-gray-400", "cursor-not-allowed");
+        el.removeAttribute("href");
+      }
+    });
+
+  })
+  .catch(() => {
+    alert("Gagal koneksi ke server");
+  });
+
+</script>
+
+</body>
+</html>
