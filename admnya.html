@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Soal</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+th {
+  position: relative;
+}
+
+.resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.resizer:hover {
+  background: #3b82f6;
+}
+
+/* DESKTOP: MODE PADAT */
+@media (min-width: 768px){
+  table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 4px !important;
+  }
+
+  input {
+    font-size: 12px !important;
+    padding: 4px !important;
+  }
+
+  button {
+    padding: 4px !important;
+  }
+
+  h1 {
+    font-size: 16px !important;
+  }
+
+  #homeBtn {
+    padding: 6px !important;
+  }
+}
+</style>
+</head>
+
+<body class="bg-slate-100 p-3 md:p-4">
+
+<!-- HOME BUTTON -->
+<a href="/" id="homeBtn" title="Home"
+  class="fixed top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg z-50">
+  <i data-lucide="home"></i>
+</a>
+
+<h1 class="text-lg md:text-base font-bold mb-4">Manajemen Soal</h1>
+
+<div class="overflow-x-auto">
+<table id="myTable" class="min-w-full bg-white shadow rounded-xl overflow-hidden text-sm">
+<thead class="bg-gray-200">
+<tr>
+  <th class="p-2 w-56 min-w-[200px]">Mapel<div class="resizer"></div></th>
+  <th class="p-2 w-full min-w-[300px]">URL<div class="resizer"></div></th>
+  <th class="p-2 w-36 min-w-[120px]">Password<div class="resizer"></div></th>
+  <th class="p-2 w-44 min-w-[160px] sticky right-0 bg-gray-200 z-10">Aksi</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbwxCATRhFQb7R-xJXS_YFMLxIebQ2jpdba076aULxJMNTmTafqr12dmTj6XGboEceF4nQ/exec";
+
+// LOAD DATA
+function loadData(){
+  fetch(API)
+  .then(res => res.json())
+  .then(res => {
+
+    let html = "";
+    const data = res.data;
+
+    Object.keys(data).forEach(key => {
+      const d = data[key];
+
+      html += `
+      <tr class="border-t">
+        <td class="p-2">
+          <input value="${key}" id="mapel-${d.row}" 
+            class="border p-2 w-full bg-gray-100 text-sm rounded" readonly>
+        </td>
+
+        <td class="p-2">
+          <input value="${d.url}" id="url-${d.row}" 
+            class="border p-2 w-full bg-gray-100 truncate text-sm rounded" readonly>
+        </td>
+
+        <td class="p-2">
+          <input value="${d.password}" id="password-${d.row}" 
+            class="border p-2 w-full bg-gray-100 text-sm rounded" readonly>
+        </td>
+
+        <td class="p-2 sticky right-0 bg-white z-10">
+          <div class="flex gap-2">
+          
+            <button id="btn-${d.row}" onclick="editData('${d.row}')" 
+              class="bg-yellow-500 text-white p-2 rounded w-full">
+              <i data-lucide="pencil"></i>
+            </button>
+
+            <button onclick="deleteData('${d.row}')" 
+              class="bg-red-600 text-white p-2 rounded w-full">
+              <i data-lucide="trash-2"></i>
+            </button>
+
+          </div>
+        </td>
+      </tr>`;
+    });
+
+    document.getElementById("tableBody").innerHTML = html;
+    lucide.createIcons();
+  });
+}
+
+// EDIT MODE
+function editData(row){
+  const mapel = document.getElementById("mapel-" + row);
+  const url = document.getElementById("url-" + row);
+  const password = document.getElementById("password-" + row);
+  const btn = document.getElementById("btn-" + row);
+
+  mapel.removeAttribute("readonly");
+  url.removeAttribute("readonly");
+  password.removeAttribute("readonly");
+
+  mapel.classList.remove("bg-gray-100");
+  url.classList.remove("bg-gray-100");
+  password.classList.remove("bg-gray-100");
+
+  url.classList.remove("truncate");
+
+  btn.innerHTML = `<i data-lucide="save"></i>`;
+  btn.classList.remove("bg-yellow-500");
+  btn.classList.add("bg-blue-600");
+
+  btn.onclick = function(){
+    updateData(row);
+  };
+
+  if(!document.getElementById("cancel-" + row)){
+    const cancelBtn = document.createElement("button");
+    cancelBtn.id = "cancel-" + row;
+    cancelBtn.className = "bg-gray-500 text-white p-2 rounded w-full";
+    cancelBtn.innerHTML = `<i data-lucide="x"></i>`;
+    cancelBtn.onclick = function(){
+      loadData();
+    };
+
+    btn.parentNode.appendChild(cancelBtn);
+  }
+
+  lucide.createIcons();
+}
+
+// UPDATE
+function updateData(row){
+  const mapel = document.getElementById("mapel-" + row).value;
+  const url = document.getElementById("url-" + row).value;
+  const password = document.getElementById("password-" + row).value;
+
+  fetch(API, {
+    method: "POST",
+    body: new URLSearchParams({
+      action: "update",
+      mapel, url, password, row
+    })
+  })
+  .then(() => loadData());
+}
+
+// DELETE
+function deleteData(row){
+  if(!confirm("Yakin hapus?")) return;
+
+  fetch(API, {
+    method: "POST",
+    body: new URLSearchParams({
+      action: "delete",
+      row
+    })
+  })
+  .then(() => loadData());
+}
+
+// RESIZE COLUMN
+const table = document.getElementById("myTable");
+const ths = table.querySelectorAll("th");
+
+ths.forEach((th) => {
+  const resizer = th.querySelector(".resizer");
+  if(!resizer) return;
+
+  let startX, startWidth;
+
+  resizer.addEventListener("mousedown", (e) => {
+    startX = e.pageX;
+    startWidth = th.offsetWidth;
+
+    document.onmousemove = (e) => {
+      let newWidth = startWidth + (e.pageX - startX);
+      if(newWidth > 80){
+        th.style.width = newWidth + "px";
+      }
+    };
+
+    document.onmouseup = () => {
+      document.onmousemove = null;
+      document.onmouseup = null;
+    };
+  });
+});
+
+// INIT
+loadData();
+</script>
+
+</body>
+</html>
