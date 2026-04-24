@@ -1,242 +1,338 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Soal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Soal - Admin Dashboard</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<style>
-th {
-  position: relative;
-}
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config for Font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
-.resizer {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 5px;
-  height: 100%;
-  cursor: col-resize;
-}
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-.resizer:hover {
-  background: #3b82f6;
-}
+    <style>
+        /* Custom Scrollbar for better look on windows */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
-/* DESKTOP: MODE PADAT */
-@media (min-width: 768px){
-  table {
-    font-size: 12px;
-  }
+        /* Resizer styling */
+        th {
+            position: relative;
+        }
+        .resizer {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+            transition: background 0.2s;
+            border-right: 1px solid #e2e8f0;
+        }
+        .resizer:hover, .resizer:active {
+            background: #3b82f6;
+            border-right: none;
+        }
 
-  th, td {
-    padding: 4px !important;
-  }
+        /* Sticky column styling to add shadow on scroll */
+        .sticky-col {
+            position: sticky;
+            right: 0;
+            z-index: 10;
+        }
+        
+        .sticky-col::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -5px;
+            width: 5px;
+            background: linear-gradient(to right, transparent, rgba(0,0,0,0.03));
+            pointer-events: none;
+        }
 
-  input {
-    font-size: 12px !important;
-    padding: 4px !important;
-  }
-
-  button {
-    padding: 4px !important;
-  }
-
-  h1 {
-    font-size: 16px !important;
-  }
-
-  #homeBtn {
-    padding: 6px !important;
-  }
-}
-</style>
+        /* Input transitions */
+        input {
+            transition: all 0.2s ease;
+        }
+    </style>
 </head>
 
-<body class="bg-slate-100 p-3 md:p-4">
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
 
-<!-- HOME BUTTON -->
-<a href="/dasboardsas" id="homeBtn" title="Home"
-  class="fixed top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg z-50">
-  <i data-lucide="home"></i>
-</a>
+    <div class="max-w-7xl mx-auto">
+        <!-- HEADER -->
+        <div class="flex items-center justify-between mb-8 bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-blue-100 text-blue-600 rounded-xl hidden sm:block">
+                    <i data-lucide="book-open"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Manajemen Soal</h1>
+                    <p class="text-sm text-slate-500 mt-1">Kelola URL ujian dan password mata pelajaran.</p>
+                </div>
+            </div>
+            
+            <a href="/dasboardsas" id="homeBtn" title="Kembali ke Dashboard"
+               class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 transition-colors text-white py-2 px-4 rounded-xl shadow-sm font-medium text-sm">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Dashboard</span>
+            </a>
+        </div>
 
-<h1 class="text-lg md:text-base font-bold mb-4">Manajemen Soal</h1>
+        <!-- TABLE CARD -->
+        <div class="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="myTable" class="min-w-full text-left border-collapse w-full">
+                    <thead class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                        <tr>
+                            <th class="py-4 px-4 font-semibold w-56 min-w-[200px] whitespace-nowrap">Mata Pelajaran<div class="resizer"></div></th>
+                            <th class="py-4 px-4 font-semibold w-full min-w-[300px] whitespace-nowrap">Tautan URL<div class="resizer"></div></th>
+                            <th class="py-4 px-4 font-semibold w-40 min-w-[140px] whitespace-nowrap">Password<div class="resizer"></div></th>
+                            <th class="py-4 px-4 font-semibold w-36 min-w-[120px] sticky-col bg-slate-50 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm divide-y divide-slate-100">
+                        <!-- Loading State -->
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-slate-400">
+                                <i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto mb-2 text-blue-500"></i>
+                                Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-<div class="overflow-x-auto">
-<table id="myTable" class="min-w-full bg-white shadow rounded-xl overflow-hidden text-sm">
-<thead class="bg-gray-200">
-<tr>
-  <th class="p-2 w-56 min-w-[200px]">Mapel<div class="resizer"></div></th>
-  <th class="p-2 w-full min-w-[300px]">URL<div class="resizer"></div></th>
-  <th class="p-2 w-36 min-w-[120px]">Password<div class="resizer"></div></th>
-  <th class="p-2 w-44 min-w-[160px] sticky right-0 bg-gray-200 z-10">Aksi</th>
-</tr>
-</thead>
+    <script>
+        const API = "https://script.google.com/macros/s/AKfycbwxCATRhFQb7R-xJXS_YFMLxIebQ2jpdba076aULxJMNTmTafqr12dmTj6XGboEceF4nQ/exec";
 
-<tbody id="tableBody"></tbody>
-</table>
-</div>
+        // INIT ICONS FOR STATIC HTML
+        lucide.createIcons();
 
-<script>
-const API = "https://script.google.com/macros/s/AKfycbwxCATRhFQb7R-xJXS_YFMLxIebQ2jpdba076aULxJMNTmTafqr12dmTj6XGboEceF4nQ/exec";
+        // LOAD DATA
+        function loadData() {
+            fetch(API)
+                .then(res => res.json())
+                .then(res => {
+                    let html = "";
+                    const data = res.data;
 
-// LOAD DATA
-function loadData(){
-  fetch(API)
-  .then(res => res.json())
-  .then(res => {
+                    if(Object.keys(data).length === 0) {
+                        html = `<tr><td colspan="4" class="p-8 text-center text-slate-500">Data belum tersedia.</td></tr>`;
+                    } else {
+                        Object.keys(data).forEach(key => {
+                            const d = data[key];
 
-    let html = "";
-    const data = res.data;
+                            // Using transparent inputs by default (looks like text), changes style when editable
+                            html += `
+                            <tr class="hover:bg-slate-50 transition-colors group">
+                                <td class="p-3">
+                                    <input value="${key}" id="mapel-${d.row}" 
+                                        class="w-full bg-transparent border border-transparent focus:outline-none px-3 py-2 rounded-lg text-slate-800 font-medium" readonly>
+                                </td>
 
-    Object.keys(data).forEach(key => {
-      const d = data[key];
+                                <td class="p-3">
+                                    <input value="${d.url}" id="url-${d.row}" 
+                                        class="w-full bg-transparent border border-transparent focus:outline-none px-3 py-2 rounded-lg text-blue-600 truncate" readonly>
+                                </td>
 
-      html += `
-      <tr class="border-t">
-        <td class="p-2">
-          <input value="${key}" id="mapel-${d.row}" 
-            class="border p-2 w-full bg-gray-100 text-sm rounded" readonly>
-        </td>
+                                <td class="p-3">
+                                    <input value="${d.password}" id="password-${d.row}" 
+                                        class="w-full bg-transparent border border-transparent focus:outline-none px-3 py-2 rounded-lg text-slate-600 font-mono" readonly>
+                                </td>
 
-        <td class="p-2">
-          <input value="${d.url}" id="url-${d.row}" 
-            class="border p-2 w-full bg-gray-100 truncate text-sm rounded" readonly>
-        </td>
+                                <td class="p-3 sticky-col bg-white group-hover:bg-slate-50 transition-colors">
+                                    <div class="flex justify-center gap-1" id="action-group-${d.row}">
+                                        <button id="btn-${d.row}" onclick="editData('${d.row}')" title="Edit"
+                                            class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors">
+                                            <i data-lucide="pencil" class="w-5 h-5"></i>
+                                        </button>
+                                        <button id="del-${d.row}" onclick="deleteData('${d.row}')" title="Hapus"
+                                            class="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                        });
+                    }
 
-        <td class="p-2">
-          <input value="${d.password}" id="password-${d.row}" 
-            class="border p-2 w-full bg-gray-100 text-sm rounded" readonly>
-        </td>
+                    document.getElementById("tableBody").innerHTML = html;
+                    lucide.createIcons();
+                })
+                .catch(err => {
+                    document.getElementById("tableBody").innerHTML = `
+                        <tr><td colspan="4" class="p-8 text-center text-red-500">Gagal memuat data. Silakan refresh halaman.</td></tr>`;
+                    lucide.createIcons();
+                });
+        }
 
-        <td class="p-2 sticky right-0 bg-white z-10">
-          <div class="flex gap-2">
-          
-            <button id="btn-${d.row}" onclick="editData('${d.row}')" 
-              class="bg-yellow-500 text-white p-2 rounded w-full">
-              <i data-lucide="pencil"></i>
-            </button>
+        // EDIT MODE
+        function editData(row) {
+            const mapel = document.getElementById("mapel-" + row);
+            const url = document.getElementById("url-" + row);
+            const password = document.getElementById("password-" + row);
+            const btn = document.getElementById("btn-" + row);
+            const delBtn = document.getElementById("del-" + row);
+            const actionGroup = document.getElementById("action-group-" + row);
 
-            <button onclick="deleteData('${d.row}')" 
-              class="bg-red-600 text-white p-2 rounded w-full">
-              <i data-lucide="trash-2"></i>
-            </button>
+            // Enable inputs
+            const inputs = [mapel, url, password];
+            inputs.forEach(input => {
+                input.removeAttribute("readonly");
+                input.classList.remove("bg-transparent", "border-transparent", "truncate", "text-blue-600");
+                input.classList.add("bg-white", "border-blue-300", "focus:ring-2", "focus:ring-blue-100", "shadow-inner", "text-slate-800");
+            });
 
-          </div>
-        </td>
-      </tr>`;
-    });
+            // Set focus to the first input
+            mapel.focus();
 
-    document.getElementById("tableBody").innerHTML = html;
-    lucide.createIcons();
-  });
-}
+            // Hide delete button during edit
+            if(delBtn) delBtn.style.display = "none";
 
-// EDIT MODE
-function editData(row){
-  const mapel = document.getElementById("mapel-" + row);
-  const url = document.getElementById("url-" + row);
-  const password = document.getElementById("password-" + row);
-  const btn = document.getElementById("btn-" + row);
+            // Change Edit button to Save
+            btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i>`;
+            btn.title = "Simpan";
+            btn.className = "text-green-600 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition-colors shadow-sm";
+            btn.onclick = function() {
+                updateData(row, btn);
+            };
 
-  mapel.removeAttribute("readonly");
-  url.removeAttribute("readonly");
-  password.removeAttribute("readonly");
+            // Add Cancel button
+            if (!document.getElementById("cancel-" + row)) {
+                const cancelBtn = document.createElement("button");
+                cancelBtn.id = "cancel-" + row;
+                cancelBtn.title = "Batal";
+                cancelBtn.className = "text-slate-500 bg-slate-100 hover:bg-slate-200 p-2 rounded-lg transition-colors shadow-sm";
+                cancelBtn.innerHTML = `<i data-lucide="x" class="w-5 h-5"></i>`;
+                cancelBtn.onclick = function() {
+                    loadData(); // Reload to cancel edits
+                };
+                actionGroup.appendChild(cancelBtn);
+            }
 
-  mapel.classList.remove("bg-gray-100");
-  url.classList.remove("bg-gray-100");
-  password.classList.remove("bg-gray-100");
+            lucide.createIcons();
+        }
 
-  url.classList.remove("truncate");
+        // UPDATE
+        function updateData(row, btnElement) {
+            // Loading state on button
+            btnElement.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`;
+            lucide.createIcons();
 
-  btn.innerHTML = `<i data-lucide="save"></i>`;
-  btn.classList.remove("bg-yellow-500");
-  btn.classList.add("bg-blue-600");
+            const mapel = document.getElementById("mapel-" + row).value;
+            const url = document.getElementById("url-" + row).value;
+            const password = document.getElementById("password-" + row).value;
 
-  btn.onclick = function(){
-    updateData(row);
-  };
+            fetch(API, {
+                method: "POST",
+                body: new URLSearchParams({
+                    action: "update",
+                    mapel, url, password, row
+                })
+            })
+            .then(() => loadData())
+            .catch(() => {
+                alert("Gagal memperbarui data.");
+                loadData();
+            });
+        }
 
-  if(!document.getElementById("cancel-" + row)){
-    const cancelBtn = document.createElement("button");
-    cancelBtn.id = "cancel-" + row;
-    cancelBtn.className = "bg-gray-500 text-white p-2 rounded w-full";
-    cancelBtn.innerHTML = `<i data-lucide="x"></i>`;
-    cancelBtn.onclick = function(){
-      loadData();
-    };
+        // DELETE
+        function deleteData(row) {
+            if (!confirm("Apakah Anda yakin ingin menghapus data ini?")) return;
 
-    btn.parentNode.appendChild(cancelBtn);
-  }
+            const delBtn = document.getElementById("del-" + row);
+            delBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`;
+            lucide.createIcons();
 
-  lucide.createIcons();
-}
+            fetch(API, {
+                method: "POST",
+                body: new URLSearchParams({
+                    action: "delete",
+                    row
+                })
+            })
+            .then(() => loadData())
+            .catch(() => {
+                alert("Gagal menghapus data.");
+                loadData();
+            });
+        }
 
-// UPDATE
-function updateData(row){
-  const mapel = document.getElementById("mapel-" + row).value;
-  const url = document.getElementById("url-" + row).value;
-  const password = document.getElementById("password-" + row).value;
+        // RESIZE COLUMN (Optimized)
+        const table = document.getElementById("myTable");
+        const ths = table.querySelectorAll("th");
 
-  fetch(API, {
-    method: "POST",
-    body: new URLSearchParams({
-      action: "update",
-      mapel, url, password, row
-    })
-  })
-  .then(() => loadData());
-}
+        ths.forEach((th) => {
+            const resizer = th.querySelector(".resizer");
+            if (!resizer) return;
 
-// DELETE
-function deleteData(row){
-  if(!confirm("Yakin hapus?")) return;
+            let startX, startWidth;
 
-  fetch(API, {
-    method: "POST",
-    body: new URLSearchParams({
-      action: "delete",
-      row
-    })
-  })
-  .then(() => loadData());
-}
+            resizer.addEventListener("mousedown", (e) => {
+                startX = e.pageX;
+                startWidth = th.offsetWidth;
 
-// RESIZE COLUMN
-const table = document.getElementById("myTable");
-const ths = table.querySelectorAll("th");
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none'; // Prevent text selection while dragging
 
-ths.forEach((th) => {
-  const resizer = th.querySelector(".resizer");
-  if(!resizer) return;
+                document.onmousemove = (e) => {
+                    let newWidth = startWidth + (e.pageX - startX);
+                    if (newWidth > 80) {
+                        th.style.width = newWidth + "px";
+                        th.style.minWidth = newWidth + "px";
+                    }
+                };
 
-  let startX, startWidth;
+                document.onmouseup = () => {
+                    document.onmousemove = null;
+                    document.onmouseup = null;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                };
+            });
+        });
 
-  resizer.addEventListener("mousedown", (e) => {
-    startX = e.pageX;
-    startWidth = th.offsetWidth;
-
-    document.onmousemove = (e) => {
-      let newWidth = startWidth + (e.pageX - startX);
-      if(newWidth > 80){
-        th.style.width = newWidth + "px";
-      }
-    };
-
-    document.onmouseup = () => {
-      document.onmousemove = null;
-      document.onmouseup = null;
-    };
-  });
-});
-
-// INIT
-loadData();
-</script>
+        // INIT
+        loadData();
+    </script>
 
 </body>
 </html>
